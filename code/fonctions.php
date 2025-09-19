@@ -1,13 +1,15 @@
 <?php
+	$DB = new PDO('mysql:host=172.17.0.2;port=3307;dbname=mariadb','user','lannion');
+	
 	//****************Fonctions utilisées*****************************************************************
 	function authentification($mail,$pass){
 		$retour = false ;
-		$madb = new PDO('sqlite:bdd/comptes.sqlite'); 
-		$mail= $madb->quote($mail);
-		$pass = $madb->quote($pass);
+
+		$mail= $DB->quote($mail);
+		$pass = $DB->quote($pass);
 		$requete = "SELECT EMAIL, PASS FROM utilisateurs WHERE EMAIL = ".$mail." AND PASS = ".$pass ;
 		//var_dump($requete);echo "<br/>";  	
-		$resultat = $madb->query($requete);
+		$resultat = $DB->query($requete);
 		$tableau_assoc = $resultat->fetchAll(PDO::FETCH_ASSOC);
 		if (sizeof($tableau_assoc)!=0) $retour = true;	
 		return $retour;
@@ -18,11 +20,11 @@
 	function isAdmin($mail){
 		$retour = false ;
 		//se connecter à la bdd
-		$madb = new PDO('sqlite:bdd/comptes.sqlite'); 
-		$mail= $madb->quote($mail);
+
+		$mail= $DB->quote($mail);
 		$requete = "SELECT STATUT FROM utilisateurs WHERE EMAIL = $mail;" ;
 		// var_dump($requete) ;
-		$resultat = $madb->query($requete) ;
+		$resultat = $DB->query($requete) ;
 		$statut = $resultat->fetch(PDO::FETCH_ASSOC) ;		// fetch -> quand on a un seul résultat attendu
 		if ($statut["STATUT"] == "admin")	  // décision !
 			$retour = true ;
@@ -33,9 +35,9 @@
 	//***************************************************************************************************
 	function listerProduits()	{
 		$retour = false ;	
-		$madb = new PDO('sqlite:bdd/produits.sqlite'); 
+
 		$requete = "SELECT images, designation, prixTTC, forfaitlivraison FROM produit ;" ;
-		$resultat = $madb->query($requete) ;
+		$resultat = $DB->query($requete) ;
 		$retour = $resultat->fetchAll(PDO::FETCH_ASSOC) ;
 
 		return $retour;
@@ -44,11 +46,11 @@
 	//***************************************************************************************************
 	function listerProduitsParCategorie($categorie){
 		$retour = false ;
-		$madb = new PDO('sqlite:bdd/produits.sqlite');
-		$categoriep = $madb->quote($categorie);
+		
+		$categoriep = $DB->quote($categorie);
 		//var_dump($categorie) ;
 		$requete = "SELECT images, designation, prixTTC, forfaitlivraison FROM produit as p INNER JOIN categorieproduit as c ON p.idCat = c.idCat WHERE c.idCat = $categoriep;" ;
-		$resultat = $madb->query($requete);
+		$resultat = $DB->query($requete);
 		$retour = $resultat->fetchAll(PDO::FETCH_ASSOC);
 		return $retour;
 	}
@@ -56,14 +58,14 @@
 	function ajouterProduit($categorie,$designation,$forfait,$image,$prix){
 		$retour=0;
 		try {
-			$madb = new PDO('sqlite:bdd/produits.sqlite'); 
-			$categorie=$madb->quote($categorie);
-			$designation=$madb->quote($designation);
-			$forfait=$madb->quote($forfait);
-			$prix=$madb->quote($prix);
-			$image=$madb->quote($image);
+	
+			$categorie=$DB->quote($categorie);
+			$designation=$DB->quote($designation);
+			$forfait=$DB->quote($forfait);
+			$prix=$DB->quote($prix);
+			$image=$DB->quote($image);
 			$requete = "INSERT INTO produit (idCat, designation, forfaitlivraison, images, prixTTC) VALUES ($categorie,$designation,$forfait,$image, $prix);" ;
-			$retour = $madb->exec($requete) ;
+			$retour = $DB->exec($requete) ;
 
 		}
 		catch (Exception $e) {		
@@ -76,15 +78,15 @@
 	function supprimerProduit($produit){
 		$retour=0;
 		try {
-			$madb = new PDO('sqlite:bdd/produits.sqlite');
+			
 			$requete = "SELECT images FROM produit WHERE idPdt = $produit ;";
-			$resultat = $madb->query($requete);
+			$resultat = $DB->query($requete);
 			$image = $resultat->fetch(PDO::FETCH_ASSOC);
 			
 			if ($image) {
 				//var_dump($image['images']);
 				$requete2 = "DELETE FROM produit WHERE idPdt = $produit ;";
-				$retour = $madb->exec($requete2);
+				$retour = $DB->exec($requete2);
 				
 				// Supprimer l'image associée (code trouver grâce à mes recherches personnelles)
 				$imagePath = 'images/' . $image['images'];
@@ -113,19 +115,19 @@
 	function modifierProduit($produit,$prix,$forfait){
         $retour=0;
         try{
-            $madb = new PDO('sqlite:bdd/produits.sqlite'); 
-            $madb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION) ;
-            $produit=$madb->quote($produit);
-            $prix=$madb->quote($prix);
-            $forfait=$madb->quote($forfait);
+            
+            $DB->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION) ;
+            $produit=$DB->quote($produit);
+            $prix=$DB->quote($prix);
+            $forfait=$DB->quote($forfait);
             
             $requete = "UPDATE produit SET prixTTC = $prix WHERE  designation = $produit ; " ;
             
             $requete2 = "UPDATE produit SET forfaitlivraison = $forfait  WHERE  designation = $produit ; " ;
             
             //var_dump($requete) ;
-            $retour = $madb->exec($requete) ;
-            $retour2 = $madb->exec($requete2) ;
+            $retour = $DB->exec($requete) ;
+            $retour2 = $DB->exec($requete2) ;
         }
         catch (Exception $e) {      
             echo "Erreur " . $e->getMessage();      
