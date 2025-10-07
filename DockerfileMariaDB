@@ -1,1 +1,15 @@
+# Image de mariadb
 FROM mariadb:latest
+
+# Création des variables d'environnement pour le user et mdp
+ENV MARIADB_PASSWORD=lannion
+ENV MARIADB_ROOT_PASSWORD=lannion
+ENV MARIADB_DATABASE=mariadb
+ENV MARIADB_USER=user
+
+# Copie de la bdd dans le dossier permettant de l'exécuter sur mariadb
+COPY bdd/comptes.sql /docker-entrypoint-initdb.d/
+COPY bdd/produits.sql /docker-entrypoint-initdb.d/
+
+# Expose du port 3306 (port de mariadb)
+EXPOSE 3306
