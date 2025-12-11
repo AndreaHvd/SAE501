@@ -1,0 +1,22 @@
+# Image d'apache
+FROM php:8.2-apache
+
+# Installation des packages mysql
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN docker-php-ext-install pdo_mysql gd
+
+# Copie du code dans le dossier /var/www/html du conteneur
+COPY . /var/www/html/
+
+# Attribution des droits sur les fichiers du site
+RUN chown -R www-data:www-data /var/www/html/ \
+    && chmod -R 775 /var/www/html/
+
+# Expose du port 80 (port http)
+EXPOSE 80
+
+# Démarrage d'apache
+CMD ["apache2-foreground"]
