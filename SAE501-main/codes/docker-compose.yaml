@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 1. Base de données MariaDB
+  mariadb:
+    build:
+      context: ./bdd
+      dockerfile: DockerfileMariaDB
+    container_name: mariadb
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_DATABASE=mariadb
+      - MARIADB_USER=user
+      - MARIADB_PASSWORD=lannion
+    networks:
+      - network_sae
+    volumes:
+      - db_data:/var/lib/mysql
+    # Pas besoin d'exposer le port 3306 à l'extérieur si seul le PHP et l'API s'en servent,
+    # mais utile si vous voulez vous connecter avec un client SQL depuis votre PC.
+    ports:
+      - "3306:3306"
+
+  # 2. Serveur Web Apache + PHP
+  php:
+    build:
+      context: ./web
+      dockerfile: DockerfilePHP
+    container_name: php
+    ports:
+      - "8080:80"
+    networks:
+      - network_sae
+    depends_on:
+      - mariadb
+      - api
+
+  # 3. API Python (FastAPI/Flask)
+  api:
+    build:
+      context: ./api
+      dockerfile: DockerfileAPI
+    container_name: api
+    restart: on-failure
+    ports:
+      - "8000:8000" # Accessible depuis votre machine sur localhost:8000
+    networks:
+      - network_sae
+    depends_on:
+      - mariadb
+    environment:
+      # L'API utilisera ce nom d'hôte pour parler à la base
+      - DB_HOST=mariadb
+      - DB_NAME=mariadb
+      - DB_USER=user
+      - DB_PORT=3306
+      - DB_PASSWORD=lannion
+
+networks:
+  network_sae:
+    driver: bridge
+
+volumes:
+  db_data:
